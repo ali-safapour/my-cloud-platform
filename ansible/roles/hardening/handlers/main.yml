@@ -1,3 +1,5 @@
-#SPDX-License-Identifier: MIT-0
 ---
-# handlers file for hardening
+- name: Restart ssh service
+  systemd:
+    name: ssh
+    state: restarted
