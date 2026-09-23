@@ -1,0 +1,8 @@
+---
+- name: hardening all servers
+  hosts: all
+  become: True
+  roles:
+    - hardening
+
+
