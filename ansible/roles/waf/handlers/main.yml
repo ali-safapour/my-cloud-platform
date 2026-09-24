@@ -1,0 +1,5 @@
+---
+- name: Restart Nginx for WAF
+  systemd:
+    name: nginx
+    state: reloaded

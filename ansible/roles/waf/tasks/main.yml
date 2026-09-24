@@ -1,0 +1,67 @@
+---
+- name: Install ModSecurity connector and OWASP Core Rule Set
+  apt:
+    name:
+      - libnginx-mod-http-modsecurity
+      - modsecurity-crs
+    state: present
+
+- name: Create ModSecurity configuration directory
+  file:
+    path: /etc/nginx/modsec
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Generate standard ModSecurity core configuration
+  copy:
+    dest: /etc/nginx/modsec/modsecurity.conf
+    content: |
+      SecRuleEngine On
+      SecRequestBodyAccess On
+      SecResponseBodyAccess Off
+      SecResponseBodyMimeType text/plain text/html text/xml
+      SecRequestBodyLimit 13107200
+      SecRequestBodyNoFilesLimit 131072
+      SecRequestBodyLimitAction Reject
+      SecRule REQBODY_ERROR "!@eq 0" "id:'200001',phase:2,t:none,log,deny,status:400,msg:'Failed to parse request body.'"
+      SecRule MULTIPART_STRICT_ERROR "!@eq 0" "id:'200002',phase:2,t:none,log,deny,status:400,msg:'Multipart request query syntax error'"
+      SecAuditEngine RelevantOnly
+      SecAuditLogParts ABIJDEFHZ
+      SecAuditLogType Serial
+      SecAuditLog /var/log/nginx/modsec_audit.log
+      SecArgumentSeparator &
+      SecCookieFormat 0
+      SecStatusEngine Off
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Build main ModSecurity entrypoint configuration
+  copy:
+    dest: /etc/nginx/modsec/main.conf
+    content: |
+      Include /etc/nginx/modsec/modsecurity.conf
+      Include /etc/modsecurity/crs/crs-setup.conf
+      Include /usr/share/modsecurity-crs/rules/*.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Deploy default landing page automatically
+  copy:
+    content: "My Cloud Platform: WAF Shield ACTIVE and PROTECTED!\n"
+    dest: /var/www/html/index.html
+    owner: www-data
+    group: www-data
+    mode: '0644'
+
+- name: Enable WAF protection on Nginx site configuration
+  template:
+    src: waf.conf.j2
+    dest: /etc/nginx/sites-available/default
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart Nginx for WAF
