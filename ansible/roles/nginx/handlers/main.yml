@@ -1,0 +1,13 @@
+---
+- name: Restart Nginx service
+  systemd:
+    name: nginx
+    state: restarted
+
+- name: Reload Nginx service
+  systemd:
+    name: nginx
+    state: reloaded
+
+- name: Save iptables rules
+  command: netfilter-persistent save

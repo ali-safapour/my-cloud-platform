@@ -1,0 +1,33 @@
+---
+- name: Allow HTTP (80) and HTTPS (443) traffic in iptables
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_ports:
+      - "80"
+      - "443"
+    jump: ACCEPT
+    action: insert
+    rule_num: "5"
+  notify: Save iptables rules
+
+- name: Install Nginx core package
+  apt:
+    name: nginx
+    state: present
+    update_cache: yes
+
+- name: Deploy baseline Nginx site configuration
+  template:
+    src: default.conf.j2
+    dest: /etc/nginx/sites-available/default
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload Nginx service
+
+- name: Ensure Nginx service is running and enabled
+  systemd:
+    name: nginx
+    state: started
+    enabled: yes
