@@ -12,3 +12,9 @@
     - keepalived
     - nginx
     - waf
+
+- name: K3s
+  hosts: masters
+  become: true
+  roles:
+    - k3s
