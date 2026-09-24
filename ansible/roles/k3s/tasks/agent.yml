@@ -1,0 +1,47 @@
+---
+- name: Get K3s token from master
+  ansible.builtin.slurp:
+    src: /var/lib/rancher/k3s/server/node-token
+  delegate_to: "{{ groups['masters'][0] }}"
+  register: k3s_master_token_b64
+
+- name: Set k3s_token fact
+  ansible.builtin.set_fact:
+    k3s_token: "{{ k3s_master_token_b64['content'] | b64decode | trim }}"
+
+- name: Ensure /etc/rancher/k3s directory exists
+  ansible.builtin.file:
+    path: /etc/rancher/k3s
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Deploy K3s Agent configuration file
+  ansible.builtin.copy:
+    dest: /etc/rancher/k3s/config.yaml
+    owner: root
+    group: root
+    mode: '0644'
+    content: |
+      server: "https://{{ hostvars[groups['masters'][0]]['ansible_host'] }}:6443"
+      token: "{{ k3s_token }}"
+      node-ip: "{{ ansible_host }}"
+      flannel-iface: "{{ k3s_flannel_iface | default('eth1') }}"
+
+- name: Check if K3s agent binary exists
+  ansible.builtin.stat:
+    path: /usr/local/bin/k3s
+  register: k3s_agent_binary
+
+- name: Install K3s Agent
+  ansible.builtin.shell: |
+    curl -sfL https://get.k3s.io | INSTALL_K3S_CHANNEL="{{ k3s_channel }}" K3S_URL="https://{{ hostvars[groups['masters'][0]]['ansible_host'] }}:6443" K3S_TOKEN="{{ k3s_token }}" sh -
+  when: not k3s_agent_binary.stat.exists
+  changed_when: true
+
+- name: Ensure K3s Agent service is started and enabled
+  ansible.builtin.systemd:
+    name: k3s-agent
+    state: started
+    enabled: true

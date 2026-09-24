@@ -2,3 +2,7 @@
 - name: Include K3s Server tasks for Master nodes
   ansible.builtin.include_tasks: server.yml
   when: inventory_hostname in groups['masters']
+
+- name: Include K3s Agent tasks for Worker nodes
+  ansible.builtin.include_tasks: agent.yml
+  when: inventory_hostname in groups['workers']
