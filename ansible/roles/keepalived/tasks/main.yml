@@ -1,3 +1,20 @@
-#SPDX-License-Identifier: MIT-0
 ---
-# tasks file for keepalived
+- name: Install keepalived
+  apt:
+    name: keepalived
+    state: present
+
+- name: Copy keepalived config file
+  template:
+    src: keepalived.conf.j2
+    dest: /etc/keepalived/keepalived.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart keepalived service
+
+- name: Make sure keepalived is running
+  systemd:
+    name: keepalived
+    state: started
+    enabled: yes
