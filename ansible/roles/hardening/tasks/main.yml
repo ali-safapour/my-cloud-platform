@@ -70,6 +70,13 @@
     protocol: icmp
     jump: ACCEPT
 
+- name: Allow all traffic between cluster private network
+  ansible.builtin.iptables:
+    chain: INPUT
+    source: "192.168.56.0/24"
+    jump: ACCEPT
+    comment: "Trust internal cluster subnet"
+
 - name: Set default INPUT policy to DROP
   iptables:
     chain: INPUT
