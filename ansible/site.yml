@@ -1,9 +1,13 @@
 ---
-- name: hardening all servers
+- name: Hardening for All Servers
   hosts: all
   become: True
   roles:
     - hardening
+
+- name: Edge Ingress and WAF Layer
+  hosts: edge_nodes
+  become: true
+  roles:
     - keepalived
-
-
+    - nginx
