@@ -14,7 +14,7 @@
     - waf
 
 - name: K3s
-  hosts: masters
+  hosts: masters, workers
   become: true
   roles:
     - k3s
