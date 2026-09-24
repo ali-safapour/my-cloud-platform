@@ -64,6 +64,12 @@
     protocol: vrrp
     jump: ACCEPT
 
+- name: Allow ICMP (ping) traffic
+  iptables:
+    chain: INPUT
+    protocol: icmp
+    jump: ACCEPT
+
 - name: Set default INPUT policy to DROP
   iptables:
     chain: INPUT
