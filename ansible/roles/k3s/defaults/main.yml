@@ -1,0 +1,5 @@
+#SPDX-License-Identifier: MIT-0
+---
+k3s_channel: "stable"
+k3s_user: "vagrant"
+k3s_flannel_iface: "eth1"

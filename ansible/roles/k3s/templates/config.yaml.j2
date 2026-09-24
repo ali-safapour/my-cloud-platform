@@ -1,0 +1,8 @@
+write-kubeconfig-mode: "0644"
+
+disable:
+  - traefik
+  - servicelb
+
+node-ip: "{{ ansible_host }}"
+flannel-iface: "{{ k3s_flannel_iface | default('eth1') }}"

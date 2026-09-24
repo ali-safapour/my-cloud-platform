@@ -1,0 +1,61 @@
+---
+- name: Ensure /etc/rancher/k3s directory exists
+  ansible.builtin.file:
+    path: /etc/rancher/k3s
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Deploy K3s declarative configuration file
+  ansible.builtin.template:
+    src: config.yaml.j2
+    dest: /etc/rancher/k3s/config.yaml
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart k3s
+
+- name: Check if K3s binary already exists
+  ansible.builtin.stat:
+    path: /usr/local/bin/k3s
+  register: k3s_binary
+
+- name: Install K3s using official stable channel
+  ansible.builtin.shell: |
+    curl -sfL https://get.k3s.io | INSTALL_K3S_CHANNEL="{{ k3s_channel }}" sh -
+  when: not k3s_binary.stat.exists
+  changed_when: true
+
+- name: Ensure K3s systemd service is started and enabled
+  ansible.builtin.systemd:
+    name: k3s
+    state: started
+    enabled: true
+
+- name: Create .kube directory for user
+  ansible.builtin.file:
+    path: "/home/{{ k3s_user }}/.kube"
+    state: directory
+    owner: "{{ k3s_user }}"
+    group: "{{ k3s_user }}"
+    mode: '0750'
+
+- name: Copy kubeconfig to user home
+  ansible.builtin.copy:
+    src: /etc/rancher/k3s/k3s.yaml
+    dest: "/home/{{ k3s_user }}/.kube/config"
+    remote_src: true
+    owner: "{{ k3s_user }}"
+    group: "{{ k3s_user }}"
+    mode: '0600'
+
+- name: Add KUBECONFIG export to user bashrc
+  ansible.builtin.lineinfile:
+    path: "/home/{{ k3s_user }}/.bashrc"
+    line: 'export KUBECONFIG=~/.kube/config'
+    state: present
+
+- name: Wait for K3s node to be in Ready state
+  ansible.builtin.command: kubectl wait --for=condition=Ready node --all --timeout=90s
+  changed_when: false
