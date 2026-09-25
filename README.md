@@ -38,6 +38,7 @@ Data persistence is managed through the local-path storage provisioner for state
 ## 4. Screenshots:
 ![Argocd Uses OpenLDAP](images/screenshots/argocd_openldap.png)
 ![Argocd Panel](images/screenshots/argocd.png)
+![Roundcube Panel](images/screenshots/roundcube.png)
 ![Grafana Panel](images/screenshots/grafana.png)
 ![SQL Injection Mitigation](images/screenshots/sqli.png)
 ![XSS Mitigation](images/screenshots/xss.png)
