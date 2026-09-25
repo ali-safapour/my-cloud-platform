@@ -1,0 +1,4 @@
+---
+argocd_version: "v3.5.3"
+argocd_namespace: "argocd"
+argocd_nodeport: 30443

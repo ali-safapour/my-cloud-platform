@@ -1,0 +1,50 @@
+---
+- name: Create ArgoCD namespace manifest
+  ansible.builtin.command: kubectl create namespace {{ argocd_namespace }} --dry-run=client -o yaml
+  register: argocd_ns_yaml
+  changed_when: false
+
+- name: Apply ArgoCD namespace
+  ansible.builtin.command: kubectl apply -f -
+  args:
+    stdin: "{{ argocd_ns_yaml.stdout }}"
+  changed_when: false
+
+- name: Download official ArgoCD installation manifest
+  ansible.builtin.get_url:
+    url: "https://raw.githubusercontent.com/argoproj/argo-cd/{{ argocd_version }}/manifests/install.yaml"
+    dest: /tmp/argocd-install.yaml
+    mode: '0644'
+
+- name: Install ArgoCD components using Server-Side Apply
+  ansible.builtin.command: >
+    kubectl apply -n {{ argocd_namespace }}
+    --server-side
+    --force-conflicts
+    -f /tmp/argocd-install.yaml
+  register: argocd_install_result
+  changed_when: "'configured' in argocd_install_result.stdout or 'created' in argocd_install_result.stdout"
+
+- name: Expose ArgoCD server via NodePort
+  ansible.builtin.command: >
+    kubectl patch svc argocd-server -n {{ argocd_namespace }}
+    -p '{"spec": {"type": "NodePort", "ports": [{"name": "https", "port": 443, "targetPort": 8080, "nodePort": {{ argocd_nodeport }}}]}}'
+  changed_when: false
+
+- name: Wait for ArgoCD server deployment to be ready
+  ansible.builtin.command: >
+    kubectl wait --for=condition=Available deployment/argocd-server
+    -n {{ argocd_namespace }}
+    --timeout=300s
+  changed_when: false
+
+- name: Display ArgoCD Access Information
+  ansible.builtin.debug:
+    msg:
+      - "=================================================="
+      - "  ArgoCD {{ argocd_version }} Installed & Ready!"
+      - "  URL:      https://{{ ansible_host }}:{{ argocd_nodeport }}"
+      - "  Username: admin"
+      - "  To get password securely, run:"
+      - "    kubectl -n {{ argocd_namespace }} get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d"
+      - "=================================================="
