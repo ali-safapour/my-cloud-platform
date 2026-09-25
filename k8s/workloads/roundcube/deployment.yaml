@@ -38,9 +38,9 @@ spec:
             - name: ROUNDCUBEMAIL_DB_PORT
               value: "3306"
             - name: ROUNDCUBEMAIL_DB_USER
-              value: "mailuser"
+              value: "roundcube"
             - name: ROUNDCUBEMAIL_DB_NAME
-              value: "maildb"
+              value: "roundcubemail"
             - name: ROUNDCUBEMAIL_DB_PASSWORD
               valueFrom:
                 secretKeyRef:
