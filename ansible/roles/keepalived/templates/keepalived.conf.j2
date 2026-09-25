@@ -12,6 +12,6 @@ vrrp_instance VI_1 {
     }
 
     virtual_ipaddress {
-        192.168.56.100/24 dev eth1 label eth1:vip
+      {{ keepalived_vip }}/24 dev eth1 label eth1:vip
     }
 }
