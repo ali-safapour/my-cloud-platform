@@ -18,3 +18,9 @@
   become: true
   roles:
     - k3s
+
+- name: Deploy GitOps Controller (ArgoCD)
+  hosts: masters
+  become: true
+  roles:
+    - argocd
