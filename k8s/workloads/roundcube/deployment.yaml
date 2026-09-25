@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: roundcube
+  namespace: mail-system
+  labels:
+    app.kubernetes.io/name: roundcube
+    app.kubernetes.io/version: "1.7.4"
+    app.kubernetes.io/part-of: enterprise-cloud-mail
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: roundcube
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: roundcube
+        app.kubernetes.io/version: "1.7.4"
+    spec:
+      containers:
+        - name: roundcube
+          image: roundcube/roundcubemail:1.7.4-apache
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+          env:
+            - name: ROUNDCUBEMAIL_DB_TYPE
+              value: "mysql"
+            - name: ROUNDCUBEMAIL_DB_HOST
+              value: "mariadb-service.mail-system.svc.cluster.local"
+            - name: ROUNDCUBEMAIL_DB_PORT
+              value: "3306"
+            - name: ROUNDCUBEMAIL_DB_USER
+              value: "mailuser"
+            - name: ROUNDCUBEMAIL_DB_NAME
+              value: "maildb"
+            - name: ROUNDCUBEMAIL_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: roundcube-secret
+                  key: ROUNDCUBEMAIL_DB_PASSWORD
+            
+            - name: ROUNDCUBEMAIL_DES_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: roundcube-secret
+                  key: ROUNDCUBEMAIL_DES_KEY
+            
+            # تم مدرن
+            - name: ROUNDCUBEMAIL_SKIN
+              value: "elastic"
+            
+            # سرور میل
+            - name: ROUNDCUBEMAIL_DEFAULT_HOST
+              value: "mail-server.corp.local"
+            - name: ROUNDCUBEMAIL_SMTP_SERVER
+              value: "mail-server.corp.local"
+            - name: ROUNDCUBEMAIL_SMTP_PORT
+              value: "587"
+            - name: ROUNDCUBEMAIL_UPLOAD_MAX_FILESIZE
+              value: "10M"
+
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "48Mi"
+            limits:
+              cpu: "200m"
+              memory: "96Mi"
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 3
+            failureThreshold: 3
