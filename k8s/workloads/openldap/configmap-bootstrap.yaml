@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openldap-bootstrap
+  namespace: mail-system
+data:
+  01-structure.ldif: |
+    dn: ou=users,dc=corp,dc=local
+    objectClass: organizationalUnit
+    ou: users
+
+    dn: ou=groups,dc=corp,dc=local
+    objectClass: organizationalUnit
+    ou: groups
+
+    dn: cn=devops,ou=groups,dc=corp,dc=local
+    objectClass: top
+    objectClass: posixGroup
+    cn: devops
+    gidNumber: 5000
+
+    dn: uid=sysadmin,ou=users,dc=corp,dc=local
+    objectClass: top
+    objectClass: person
+    objectClass: organizationalPerson
+    objectClass: inetOrgPerson
+    objectClass: posixAccount
+    objectClass: shadowAccount
+    cn: System
+    sn: Administrator
+    uid: sysadmin
+    mail: sysadmin@corp.local
+    userPassword: SysAdminPass2026!
+    uidNumber: 10001
+    gidNumber: 5000
+    homeDirectory: /home/sysadmin
+
+    dn: uid=user1,ou=users,dc=corp,dc=local
+    objectClass: top
+    objectClass: person
+    objectClass: organizationalPerson
+    objectClass: inetOrgPerson
+    objectClass: posixAccount
+    objectClass: shadowAccount
+    cn: Test
+    sn: User
+    uid: user1
+    mail: user1@corp.local
+    userPassword: UserPass2026!
+    uidNumber: 10002
+    gidNumber: 5000
+    homeDirectory: /home/user1
