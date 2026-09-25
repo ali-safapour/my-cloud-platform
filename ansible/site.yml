@@ -8,6 +8,7 @@
 - name: Edge Ingress and WAF Layer
   hosts: edge_nodes
   become: true
+  tags: ingress
   roles:
     - keepalived
     - nginx

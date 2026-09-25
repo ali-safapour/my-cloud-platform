@@ -31,3 +31,20 @@
     name: nginx
     state: started
     enabled: yes
+
+- name: Deploy Webmail Nginx site configuration
+  ansible.builtin.template:
+    src: webmail.conf.j2
+    dest: /etc/nginx/sites-available/webmail.corp.local.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload Nginx service
+
+- name: Enable Webmail Nginx site
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/webmail.corp.local.conf
+    dest: /etc/nginx/sites-enabled/webmail.corp.local.conf
+    state: link
+  notify: Reload Nginx service
+
