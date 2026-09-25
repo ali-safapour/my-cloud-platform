@@ -52,6 +52,34 @@
   changed_when: "'created' in root_app_result.stdout or 'configured' in root_app_result.stdout"
   when: inventory_hostname in groups['masters']
 
+- name: Render ArgoCD SSO ConfigMap from Jinja2 template
+  ansible.builtin.template:
+    src: argocd-cm-patch.yaml.j2
+    dest: /tmp/argocd-cm-patch.yaml
+    mode: '0644'
+  when: inventory_hostname in groups['masters']
+
+- name: Copy ArgoCD RBAC ConfigMap manifest
+  ansible.builtin.copy:
+    src: argocd-rbac-cm-patch.yaml
+    dest: /tmp/argocd-rbac-cm-patch.yaml
+    mode: '0644'
+  when: inventory_hostname in groups['masters']
+
+- name: Apply ArgoCD LDAP SSO and RBAC configuration
+  ansible.builtin.command:
+    cmd: kubectl apply -f /tmp/argocd-cm-patch.yaml -f /tmp/argocd-rbac-cm-patch.yaml
+  register: sso_patch_result
+  changed_when: "'configured' in sso_patch_result.stdout"
+  when: inventory_hostname in groups['masters']
+
+- name: Restart ArgoCD Server and Dex to load SSO configuration
+  ansible.builtin.command:
+    cmd: kubectl rollout restart deployment argocd-server argocd-dex-server -n {{ argocd_namespace }}
+  when:
+    - inventory_hostname in groups['masters']
+    - sso_patch_result.changed
+
 - name: Display ArgoCD Access Information
   ansible.builtin.debug:
     msg:

@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  url: "https://{{ keepalived_vip | default(ansible_host) }}:{{ argocd_nodeport | default(30443) }}"
+  dex.config: |
+    connectors:
+      - type: ldap
+        id: ldap
+        name: Enterprise Cloud LDAP
+        config:
+          host: "openldap-service.mail-system.svc.cluster.local:389"
+          insecureNoSSL: true
+          bindDN: "cn=admin,dc=corp,dc=local"
+          bindPW: "AdminCorpPass2026Safe!"
+          userSearch:
+            baseDN: "ou=users,dc=corp,dc=local"
+            filter: "(objectClass=inetOrgPerson)"
+            username: uid
+            idAttr: uid
+            emailAttr: mail
+            nameAttr: cn
+          groupSearch:
+            baseDN: "ou=groups,dc=corp,dc=local"
+            filter: "(objectClass=posixGroup)"
+            userMatchers:
+              - userAttr: uid
+                groupAttr: memberUid
