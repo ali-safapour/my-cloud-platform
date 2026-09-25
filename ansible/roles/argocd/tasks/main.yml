@@ -38,6 +38,20 @@
     --timeout=300s
   changed_when: false
 
+- name: Copy Root Application manifest to master node
+  ansible.builtin.copy:
+    src: root-application.yaml
+    dest: /tmp/root-application.yaml
+    mode: '0644'
+  when: inventory_hostname in groups['masters']
+
+- name: Deploy GitOps Root Application (App of Apps bootstrap)
+  ansible.builtin.command:
+    cmd: kubectl apply -f /tmp/root-application.yaml
+  register: root_app_result
+  changed_when: "'created' in root_app_result.stdout or 'configured' in root_app_result.stdout"
+  when: inventory_hostname in groups['masters']
+
 - name: Display ArgoCD Access Information
   ansible.builtin.debug:
     msg:
@@ -48,3 +62,4 @@
       - "  To get password securely, run:"
       - "    kubectl -n {{ argocd_namespace }} get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d"
       - "=================================================="
+
